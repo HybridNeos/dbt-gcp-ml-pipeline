@@ -1,0 +1,132 @@
+version: 2
+
+sources:
+  - name: best_employers
+    database: methodical-aura-373904
+    schema: best_employers
+    tables: 
+      - name: raw_data
+
+models:
+  # - name: raw_data
+  #   description: "World’s Best Employers TOP 100 from Kaggle. Read from local csv"
+  #   columns:
+  #     - name: RANK
+  #       tests:
+  #         - unique
+  #         - not_null
+  #         - dbt_utils.sequential_values:
+  #             interval: 1
+  #         - dbt_utils.accepted_range:
+  #             min_value: 1
+  #             max_value: 100
+  #             inclusive: true
+  #     - name: NAME
+  #     - name: INDUSTRIES
+  #     - name: COUNTRY/TERRITORY
+  #     - name: EMPLOYEES
+  #       tests:
+  #       - dbt_utils.expression_is_true:
+  #           expression: ">= 1000"
+  #   config:
+  #     materialized: table
+  #     bucket_name: mark-dbt-learn-bucket
+  #     source_blob_name: Worlds_Best_Employers.csv
+  #     gsutil_name: gs://mark-dbt-learn-bucket/Worlds_Best_Employers.csv
+  #     packages:
+  #       - "pandas==1.5.2"
+  
+  - name: clean_data
+    description: "Deal with obvious outliers and fix data type"
+    columns:
+      - name: RANK
+        tests:
+          - unique
+          - not_null
+          - dbt_utils.sequential_values:
+              interval: 1
+          - dbt_utils.accepted_range:
+              min_value: 1
+              max_value: 100
+              inclusive: true
+      - name: NAME
+      - name: INDUSTRIES
+      - name: COUNTRY/TERRITORY
+      - name: NUM_EMPLOYEES
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: '>= 1000'
+  
+  - name: feature_engineering
+    description: "Deal with obvious outliers and fix data type"
+    columns:
+      - name: RANK
+        tests:
+          - unique
+          - not_null
+          - dbt_utils.sequential_values:
+              interval: 1
+          - dbt_utils.accepted_range:
+              min_value: 1
+              max_value: 100
+              inclusive: true
+          - dbt_utils.cardinality_equality:
+              field: RANK
+              to: ref('feature_engineering')
+      - name: NUM_IN_CONTINENT
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 1
+              max_value: 97 # because we have four continents
+              inclusive: true
+      - name: CONTINENT_RANK
+      - name: NUM_INDUSTRIES
+      - name: NUM_EMPLOYEES
+      - name: NUM_EMPLOYEES_BIN
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 1
+              max_value: 5
+
+  - name: train_test_indices
+    description: "Indices used for a random selection of 80 percent of the data"
+    columns:
+      - name: INDEX
+
+  - name: normalized_data
+    description: "Deal with obvious outliers and fix data type"
+    tests:
+      - dbt_utils.accepted_range:
+          min_value: 0
+          max_value: 1
+          inclusive: true
+    columns:
+      - name: RANK
+      - name: NUM_IN_CONTINENT
+      - name: CONTINENT_RANK
+      - name: NUM_INDUSTRIES
+      - name: NUM_EMPLOYEES
+      - name: NUM_EMPLOYEES_BIN
+
+  - name: train_data
+    description: "80 percent of the data"
+    columns:
+      - name: RANK
+      - name: NUM_IN_CONTINENT
+      - name: CONTINENT_RANK
+      - name: NUM_INDUSTRIES
+      - name: NUM_EMPLOYEES
+      - name: NUM_EMPLOYEES_BIN
+
+  - name: test_data
+    description: "20 percent of the data"
+    columns:
+      - name: RANK
+      - name: NUM_IN_CONTINENT
+      - name: CONTINENT_RANK
+      - name: NUM_INDUSTRIES
+      - name: NUM_EMPLOYEES
+      - name: NUM_EMPLOYEES_BIN
+    tests:
+      - dbt_utils.fewer_rows_than:
+          compare_model: ref('train_data')
