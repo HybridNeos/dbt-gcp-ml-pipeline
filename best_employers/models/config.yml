@@ -102,7 +102,7 @@ models:
           inclusive: true
     columns:
       - name: RANK
-      - name: NUM_IN_CONTINENT
+      - name: PERCENT_IN_CONTINENT
       - name: CONTINENT_RANK
       - name: NUM_INDUSTRIES
       - name: NUM_EMPLOYEES
@@ -112,7 +112,7 @@ models:
     description: "80 percent of the data"
     columns:
       - name: RANK
-      - name: NUM_IN_CONTINENT
+      - name: PERCENT_IN_CONTINENT
       - name: CONTINENT_RANK
       - name: NUM_INDUSTRIES
       - name: NUM_EMPLOYEES
@@ -122,7 +122,7 @@ models:
     description: "20 percent of the data"
     columns:
       - name: RANK
-      - name: NUM_IN_CONTINENT
+      - name: PERCENT_IN_CONTINENT
       - name: CONTINENT_RANK
       - name: NUM_INDUSTRIES
       - name: NUM_EMPLOYEES
@@ -130,3 +130,16 @@ models:
     tests:
       - dbt_utils.fewer_rows_than:
           compare_model: ref('train_data')
+  
+  - name: pca_train
+    description: "CRUCIAL: The last row contains data for explained variance ratio NOT the actual components. Use python to calculate PCA for training data"
+    columns:
+      - name: component_1
+      - name: component_2
+    config:
+      num_components: 5
+      whiten: false
+      packages:
+        - "pandas==1.5.2"
+        - "numpy"
+        - "scikit-learn"
